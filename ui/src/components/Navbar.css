@@ -1,0 +1,47 @@
+.custom-navbar {
+    background-color: #00b300;
+    border-radius: 15px;
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+}
+
+.custom-nav-link {
+    position: relative;
+    overflow: hidden;
+    color: white; /* culoarea textului, schimbă după nevoie */
+    text-decoration: none; /* îndepărtează sublinierea, dacă este cazul */
+}
+
+Efectul de lumină
+.custom-nav-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.3); /* culoare și transparență pentru efectul de lumină */
+    transition: left 0.4s ease-in-out; /* durata și tipul de tranziție */
+    z-index: 1;
+}
+
+/* Efectul de hover */
+.custom-nav-link:hover::before {
+    left: 100%;
+}
+
+/* Asigură-te că textul este deasupra efectului de lumină */
+.custom-nav-link {
+    position: relative;
+    z-index: 1;
+}
+
+.logo-image {
+    height: 40px; /* Înălțimea logo-ului, ajustează după nevoie */
+    margin-right: 10px; /* Spațiu între logo și text */
+    vertical-align: middle; /* Alinierea verticală a logo-ului */
+}

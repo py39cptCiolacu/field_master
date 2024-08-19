@@ -1,0 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+
+* {
+  font-family: 'Poppins', sans-serif;
+}
+
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(to bottom right, #ffffff, #6bb300); /* Gradient de la alb la #00b3b3 din stânga sus în dreapta jos */
+  min-height: 100vh; /* Asigură că body-ul acoperă întreaga înălțime a viewport-ului */
+  overflow-x: hidden; /* Evită scroll-ul orizontal */
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}

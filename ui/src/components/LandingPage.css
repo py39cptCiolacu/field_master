@@ -1,0 +1,32 @@
+/* components/LandingPage.css */
+.background-image {
+    position: relative;
+    background: url('../assets/landing_page_background.png') no-repeat center center fixed;
+    background-size: cover; /* Asigură că imaginea acoperă întregul container */
+    background-attachment: fixed; /* Fixează imaginea de fundal pentru a se mișca mai ușor */
+    min-height: 100vh; 
+    color: #fff; /* Opțional: pentru a face textul mai lizibil pe fundalul blurat */
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  
+  .background-image::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Opțional: adaugă un overlay semi-transparent */
+    z-index: 1;
+  }
+  
+  .background-image > * {
+    position: relative;
+    z-index: 2;
+  }
+  
+  
