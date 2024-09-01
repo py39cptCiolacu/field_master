@@ -1,6 +1,6 @@
 import datetime
 
-def generate_weather_prompt_v2(weather_data):
+def generate_weather_prompt(weather_data):
     """
     Generates a prompt for AI based on weather data from a temporally structured JSON.
     

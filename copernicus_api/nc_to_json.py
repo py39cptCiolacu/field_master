@@ -1,3 +1,4 @@
+from typing import Tuple, Union, List
 import xarray as xr
 import json
 import os
@@ -5,23 +6,18 @@ import numpy as np
 
 def nc_to_json_convertor(nc_file_name: str) -> None:
 
-    # Deschide fișierul NetCDF
     ds = xr.open_dataset(f"{nc_file_name}.nc")
 
-    # Crearea unui dicționar pentru a stoca datele
     data_dict = {}
 
-    # Iterarea prin toate variabilele din dataset și adăugarea lor în dicționar
     for var_name in ds.variables:
         data_dict[var_name] = ds[var_name].values.tolist()
 
-    # Adăugarea atributelor datasetului (metadate)
     data_dict['attributes'] = {attr: ds.attrs[attr] for attr in ds.attrs}
 
     for key in data_dict.keys():
         print(key)
 
-    # Scrierea datelor în format JSON
     with open(f'{nc_file_name}.json', 'w') as json_file:
         json.dump(data_dict, json_file, indent=4)
 
@@ -30,81 +26,74 @@ def nc_to_json_convertor(nc_file_name: str) -> None:
     print("Conversia a fost realizată cu succes!")
 
 
-def process_json(input_json, output_json):
-    # Citim datele din fișierul JSON de intrare
+def process_json(input_json: str, output_json) -> None:
     with open(input_json, 'r') as file:
         data = json.load(file)
     
-    # Eliminăm cheile 'longitude' și 'latitude'
     data.pop("longitude", None)
     data.pop("latitude", None)
     data.pop("attributes", None)
     
-    # Verificăm dacă 'time' există
     if "time" not in data:
         raise KeyError("'time' key not found in the data")
     
-    # Lista de chei pentru care se calculează media
-    result = {"time": data["time"]}
+    result = calculate_mean(data)
     
-    # Calculăm media pentru fiecare sub-sub-listă din celelalte chei
-    for key, value in data.items():
-        if key != "time":
-            if not all(isinstance(sublist, list) for sublist in value):
-                raise ValueError(f"Data for key '{key}' is not a list of lists of lists")
-
-            means = []
-            for sublist in value:
-                if not all(isinstance(inner_list, list) for inner_list in sublist):
-                    raise ValueError(f"Data for key '{key}' contains elements that are not lists of lists")
-                
-                # Calculăm media pentru fiecare sub-sub-listă
-                sublist_means = []
-                for inner_list in sublist:
-                    try:
-                        # Convertim elementele la float
-                        numeric_inner_list = [float(item) for item in inner_list]
-                        # Calculăm media pentru sub-sub-listă
-                        sublist_means.append(np.mean(numeric_inner_list))
-                    except ValueError:
-                        print(f"Non-numeric value found in key '{key}': {inner_list}")
-                        print(f"Original data: {value}")
-                        raise ValueError(f"Element in key '{key}' cannot be converted to float.")
-                
-                means.append(sublist_means)
-            
-            result[key] = means
-    
-    # Calculăm media pentru fiecare sub-listă din rezultatul final
-    final_result = {"time": result["time"]}
-    for key, value in result.items():
-        if key != "time":
-            # Verificăm structura listei
-            if not all(isinstance(sublist, list) for sublist in value):
-                raise ValueError(f"Data for key '{key}' is not a list of lists")
-            
-            # Calculăm media pentru fiecare sub-listă
-            final_means = []
-            for sublist in value:
-                try:
-                    # Convertim elementele la float
-                    numeric_sublist = [float(item) for item in sublist]
-                    # Calculăm media pentru sub-listă
-                    final_means.append(np.mean(numeric_sublist))
-                except ValueError:
-                    print(f"Non-numeric value found in key '{key}': {sublist}")
-                    print(f"Original data: {result[key]}")
-                    raise ValueError(f"Element in key '{key}' cannot be converted to float.")
-            
-            final_result[key] = final_means
-    
-    # Salvăm rezultatul în fișierul JSON de ieșire
     with open(output_json, 'w') as file:
-        json.dump(final_result, file, indent=4)
+        json.dump(result, file, indent=4)
 
     # os.remove(f"{input_json}.json")
 
 
+test_data = {"time" : [12, 13, 14,],
+             "temp2" : [[[1, 34, 6, 7], [123, 45, 6, 1], [123, 45, 6, 2]], [[2, 5, 7, 1], [12, 56, 78]], [123, 45, 6, 1]]
+}
 
 
+def calculate_mean(data: dict) -> dict:
+    """
+    Every .nc file could be considered a list of lists of lists - something like this:
 
+    [[[12, 67, 12], [34, 1, 65]], [[55, 12], [56, 33]]]. This function take as an input this kind triple nested lists and return a list of 
+    """
+
+    result = {"time": data["time"]}
+
+    for key, value in data.items():
+        
+        if key == "time":
+            continue
+
+        if not all(isinstance(sublist, list) for sublist in value):
+            raise ValueError(f"Data for key {key} is not a list of lists of lists")
+        
+        current_means = []
+        for sub_value in value:
+            total, count = calculate_mean_in_list(sub_value)
+            current_means.append(total/count)
+
+        result[key] = current_means 
+        
+    return result
+
+
+def calculate_mean_in_list(value_list: list) -> Tuple[float, int]:
+    total = 0
+    count = 0
+
+    for element in value_list:
+        if isinstance(element, list):
+
+            sub_total, sub_count = calculate_mean_in_list(element)
+            total += sub_total
+            count += sub_count
+
+        elif isinstance(element, (int, float, str)):
+            numeric_element = float(element)
+            total += numeric_element
+            count += 1
+
+    return total, count
+
+            
+print(calculate_mean(data = test_data))

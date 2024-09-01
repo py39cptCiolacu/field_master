@@ -80,31 +80,33 @@ const Analysis = () => {
     };
 
     const handleSubmit = async (event) => {
-        event.preventDefault();
-        setError('');
-
+        event.preventDefault(); // Prevents the default form submission behavior
+        setError(''); // Clear any previous errors
+    
+        // Validation for start and end date
         if (!startDate || !endDate) {
             setError('Please select both start date and end date.');
             return;
         }
-
+    
         const start = new Date(startDate);
         const end = new Date(endDate);
         const differenceInDays = (end - start) / (1000 * 60 * 60 * 24);
-
+    
+        // Validate date range
         if (end < start) {
             setError('End date cannot be before start date.');
             return;
         }
-
+    
         if (differenceInDays > 7) {
             setError('The date range cannot exceed 7 days.');
             return;
         }
-
-        setIsSubmitting(true);
-        setShowMessage(true);
-
+    
+        setIsSubmitting(true); // Indicates the form is being submitted
+        setShowMessage(true); // Show a message during submission
+    
         const data = {
             parameters: parameters,
             start_date: startDate,
@@ -112,28 +114,26 @@ const Analysis = () => {
             field: selectedField,
             crop: selectedCrop,
         };
-
+    
         try {
             const token = localStorage.getItem('token');
-
+    
+            // POST request to the server
             const response = await axios.post('http://localhost:5000/api/v1/analysis', data, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
                 },
             });
-
+    
             console.log(response.data);
-
-            // Setăm cdsapi_infos în state
-            setCdsapiInfos(response.data.cdsapi_infos);
-
+            setCdsapiInfos(response.data.cdsapi_infos); // Set the response data
         } catch (error) {
             console.error('There was an error submitting the form!', error);
         } finally {
-            setIsSubmitting(false);
+            setIsSubmitting(false); // End submission state
             setTimeout(() => {
-                setShowMessage(false);
+                setShowMessage(false); // Hide the message after a delay
             }, 10000);
         }
     };

@@ -1,31 +1,15 @@
 from __future__ import annotations
 
-from flask import Blueprint, render_template, request, jsonify, session
+from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from .models import User, Land
 from website import db
-
-import folium
-import json
-import os
-
-from copernicus_api.fetch_request import get_cdsapi_infos
-from ai.prompt import generate_weather_prompt_v2
+from .helpers.views_helpers import prompt_handler
 
 views = Blueprint("views", __name__)
 
-points = []  # dc l am initializat pe asta aici? 
-
-# @views.route('/api/v1/user_profile', methods=['GET'])
-# @jwt_required()
-# def user_profile():
-#     current_user = get_jwt_identity()
-#     print(current_user)
-#     user = User.query.filter_by(email=current_user).first()
-#     if user:
-#         return jsonify(logged_in_as=current_user, email=user.email, username=user.username), 200
-#     return jsonify(message="User not found"), 404
+points = []  
 
 @views.route('/api/v1/user_profile', methods=['GET'])
 @jwt_required()
@@ -156,7 +140,6 @@ def analysis():
     if not user:
         return jsonify({'error': 'User not found'}), 404
 
-
     # Obținem toate terenurile asociate utilizatorului
     lands = Land.query.filter_by(user_id=user.id).all()
 
@@ -169,12 +152,8 @@ def analysis():
         if not data:
             return jsonify({'error': 'No data provided'}), 400
 
-        print("Received data:", data)
-        print("Parametrii: ", data["parameters"])
+        response = prompt_handler(data)
 
-        fetch_dict = get_fetch_dict(data)
-        response = get_cdsapi_infos(fetch_dict)
-    
         return jsonify({
             'message': 'Data received successfully',
             'received_data': data,
@@ -182,81 +161,9 @@ def analysis():
             'cdsapi_infos' : response
         })
 
-    elif request.method == "GET":
+    if request.method == "GET":
         # Returnăm doar numele terenurilor dacă se face un GET
         return jsonify({
             'message': 'Lands retrieved successfully',
             'land_names': land_names
         })
-    
-# @jwt_required
-def get_fetch_dict(data) -> dict:
-
-    current_user_email = get_jwt_identity()
-    current_user = User.query.filter_by(email=current_user_email).first()
-
-    current_land = Land.query.filter_by(user_id = current_user.id).filter_by(name = data["field"]).first() 
-
-    parameters_map = {
-        'Temperature at 2 meters': "2m_temperature",
-        'Total Precipitation' : "total_precipitation",
-        'Soil Moisture (top layer)' : 'volumetric_soil_water_layer_1',
-        'Solar Radiation at the surface' : 'surface_solar_radiation_downwards',
-        'Relative Humidity' : '2m_dewpoint_temperature',
-        'Wind Speed (u component)' : '10m_u_component_of_wind',  
-        'Wind Speed (v component)' : '10m_v_component_of_wind',
-        'Soil Temperature at level 1' : 'soil_temperature_level_1'
-    }
-
-    parameters_lists = []
-
-    for param in data["parameters"]:
-        parameters_lists.append(parameters_map[param])
-
-    year = data["start_date"][0:4]
-    month = data["start_date"][5:7]
-
-    start_day = data["start_date"][8:10]
-    end_day = data["end_date"][8:10]
-
-    int_current_day = int(start_day)
-    int_end_day = int(end_day)
-
-    days = []
-    while int_current_day <= int_end_day:
-
-        if int_current_day >=10:
-            days.append(str(int_current_day))
-        else:
-            day_to_append = '0' + str(int_current_day)
-            days.append(day_to_append)
-        
-        int_current_day +=1 
-
-    print(current_land.get_limits())
-
-    fetch_dict = {
-        "user" : current_user.id,
-        "land" : current_land.id,
-        "parameters": parameters_lists,
-        "year" : year,
-        "month": [month],
-        "day" : [days],
-        "area" : current_land.get_limits()
-    }
-
-    return fetch_dict
-
-
-@views.route("/test")
-def test_promt():
-
-    JSON_FILE_NAME = "daniel1234_test_land_2024_08_11_22_24_06_final.json"
-    print(os.getcwd())
-    with open(JSON_FILE_NAME, 'r') as file:
-        weather_data = json.load(file)
-
-    prompts = generate_weather_prompt_v2(weather_data)
-    print(prompts)
-
-    return "<h1> ALL GOOD </h1>"
