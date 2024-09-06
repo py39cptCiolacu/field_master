@@ -1,8 +1,6 @@
 import cdsapi
 from website.models import User, Land
 from .nc_to_json import nc_to_json_convertor, process_json
-from ai.prompt import generate_weather_prompt
-from ai.get_response import generate_response
 from datetime import datetime
 import json
 
@@ -32,6 +30,12 @@ def get_cdsapi_infos(dict_infos: dict) -> str:
     now = datetime.now()
     file_name = currrent_user.username + "_" + current_land.name + "_" + now.strftime("%Y_%m_%d_%H_%M_%S")
 
+    print("i am here")
+
+    for key in checked_infos.keys():
+        print(key, checked_infos[key])
+
+
     c.retrieve(
         "reanalysis-era5-single-levels",  # Dataset-ul pe care vrei să-l accesezi
         {
@@ -39,7 +43,7 @@ def get_cdsapi_infos(dict_infos: dict) -> str:
             "variable": checked_infos["parameters"],
             "year": checked_infos["year"],
             "month": checked_infos["month"],
-            "day": ["12", "13"],
+            "day": checked_infos["day"],
             "time": ["00:00", "04:00", "08:00",
                      "12:00", "16:00","17:00", "20:00"],
             'area': current_land.get_limits(),
@@ -67,8 +71,6 @@ def check_fetch_infos(dict_infos: dict) -> dict | None:
     #                     }
     
     must_have_keys = ["user", "land", "parameters", "year", "month", "day", "area"]
-    
-    print(f"-------------------{type(dict_infos)} - {dict_infos}")
 
     for must_key in must_have_keys:
         if must_key not in dict_infos.keys():

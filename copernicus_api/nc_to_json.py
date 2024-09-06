@@ -2,7 +2,26 @@ from typing import Tuple, Union, List
 import xarray as xr
 import json
 import os
+import shutil
 import numpy as np
+
+def move_results(file: str, username: str, land_name: str) -> None:
+    
+    src_path = os.path.join(os.getcwd(), file)
+    dest_dir = os.path.join(os.getcwd(), "..", "results", username, land_name)
+
+    if not os.path.exists(dest_dir):
+        os.makedirs(dest_dir)
+
+    dest_path = os.path.join(dest_dir, file)
+
+    try:
+        shutil.move(src_path, dest_path)
+        print("File moved")
+    except FileNotFoundError:
+        print("File not found")
+    except Exception as e:
+        print(str(e))
 
 def nc_to_json_convertor(nc_file_name: str) -> None:
 
@@ -43,11 +62,6 @@ def process_json(input_json: str, output_json) -> None:
         json.dump(result, file, indent=4)
 
     # os.remove(f"{input_json}.json")
-
-
-test_data = {"time" : [12, 13, 14,],
-             "temp2" : [[[1, 34, 6, 7], [123, 45, 6, 1], [123, 45, 6, 2]], [[2, 5, 7, 1], [12, 56, 78]], [123, 45, 6, 1]]
-}
 
 
 def calculate_mean(data: dict) -> dict:
@@ -94,6 +108,3 @@ def calculate_mean_in_list(value_list: list) -> Tuple[float, int]:
             count += 1
 
     return total, count
-
-            
-print(calculate_mean(data = test_data))
